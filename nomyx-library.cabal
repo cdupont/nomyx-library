@@ -23,7 +23,7 @@ data-files: Nomyx/Library/Examples.hs
             Nomyx/Library/Bank.hs
             templates.yaml
 data-dir: src
-extra-source-files: AUTHORS README
+extra-source-files: AUTHORS README.md
 
 library
     build-depends: nomyx-language     == 1.0.*,
@@ -45,7 +45,7 @@ library
                      Nomyx.Library.Vote
                      Nomyx.Library.Elections
                      Nomyx.Library.Bank
-                     Paths_Nomyx_Library
+                     Paths_nomyx_library
     exposed: True
     buildable: True
     hs-source-dirs: src
