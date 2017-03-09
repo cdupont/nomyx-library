@@ -2,28 +2,36 @@
 Introduction
 ============
 
-This package defines a set of rule examples to be played in Nomyx.
+Nomyx is a game where you can change the rules: http://www.nomyx.net
 
-Installation
-============
+This package defines a set of rule examples to be played in Nomyx, that you can modify.
+Just fork this package to create your own rule and play them in Nomyx!
+To push your rules to Nomyx, use [nomyx-client](https://github.com/cdupont/nomyx-client).
 
-This libary is used by the package Nomyx, it should be installed through it by typing:
 
-    cabal install Nomyx
+Usage
+=====
 
-However, to activate online documentation, install with:
+Fork this package:
+```
+git clone git@github.com:cdupont/nomyx-library.git
+```
 
-    cabal install --enable-documentation --haddock-hyperlink-source Nomyx-Language
+Get Haskell Stack:
+```
+curl -sSL https://get.haskellstack.org/ | sh
+```
 
-To install from the git repository:
+You can now compile it:
+```
+cd nomyx-library
+stack install
+```
 
-    git clone git://github.com/cdupont/Nomyx-Language.git
-    cabal install --enable-documentation --haddock-hyperlink-source Nomyx-Language/
+Feel free to modify existing rules, or create new ones!
+The rule list is in [templates.yaml](src/templates.yaml).
 
-Documentation
-=============
-
-The library comes with haddock documentation you can build (see above).
+Once done, you can push your rules to Nomyx with [nomyx-client](https://github.com/cdupont/nomyx-client).
 
 Contact
 =======
