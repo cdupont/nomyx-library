@@ -161,7 +161,7 @@ voted       vs = M.findWithDefault 0 True (voteCounts vs) + M.findWithDefault 0 
 displayOnGoingVote :: VoteBegin -> Nomex ()
 displayOnGoingVote (VoteBegin (RuleInfo rn _ _ _ _ _ (RuleTemplate name _ _ _ _ _ _)) endTime en pns) = void $ outputAll $ do
    let voteEvents = map (singleVote name rn) pns
-   ers <- getEventResults en voteEvents
+   ers <- mapM (\pn -> getEventResult en (singleVote name rn pn)) pns
    if (null ers)
      then return ""
      else showOnGoingVote (zip pns ers) rn endTime
