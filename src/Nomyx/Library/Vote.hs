@@ -34,7 +34,8 @@ data VoteStats = VoteStats { voteCounts     :: M.Map Bool Int,
 -- | information broadcasted when a vote begins
 data VoteBegin = VoteBegin { vbRule        :: RuleInfo,
                              vbEndAt       :: UTCTime,
-                             vbEventNumber :: EventNumber }
+                             vbEventNumber :: EventNumber,
+                             vbPlayers     :: [PlayerNumber]}
                              deriving (Show, Eq, Ord, Typeable)
 
 -- | information broadcasted when a vote ends
@@ -65,7 +66,8 @@ callVoteRule assess delay ri = do
 callVoteRule' :: AssessFunction -> UTCTime -> RuleInfo -> Nomex ()
 callVoteRule' assess endTime ri = do
    en <- callVote assess endTime (_rName $ _rRuleTemplate ri) (_rNumber ri) (finishVote assess ri)
-   sendMessage voteBegin (VoteBegin ri endTime en)
+   pns <- getAllPlayerNumbers
+   sendMessage voteBegin (VoteBegin ri endTime en pns)
 
 -- | actions to do when the vote is finished
 finishVote :: AssessFunction -> RuleInfo -> [(PlayerNumber, Maybe Bool)] -> Nomex ()
@@ -78,16 +80,14 @@ finishVote assess ri vs = do
 -- | call a vote for every players, with an assessing function, a delay and a function to run on the result
 callVote :: AssessFunction -> UTCTime -> String -> RuleNumber -> ([(PlayerNumber, Maybe Bool)] -> Nomex ()) -> Nomex EventNumber
 callVote assess endTime name rn payload = do
-   let title = "Vote for rule: \"" ++ name ++ "\" (#" ++ (show rn) ++ "):"
-   onEventOnce (voteWith endTime assess title) payload
-
+   onEventOnce (voteWith endTime assess name rn) payload
 
 -- | vote with a function able to assess the ongoing votes.
 -- | the vote can be concluded as soon as the result is known.
-voteWith :: UTCTime -> AssessFunction -> String -> Event [(PlayerNumber, Maybe Bool)]
-voteWith timeLimit assess title = do
+voteWith :: UTCTime -> AssessFunction -> String -> RuleNumber-> Event [(PlayerNumber, Maybe Bool)]
+voteWith timeLimit assess name rn = do
    pns <- liftEvent getAllPlayerNumbers
-   let voteEvents = map (singleVote title) pns
+   let voteEvents = map (singleVote name rn) pns
    let timerEvent = timeEvent timeLimit
    let isFinished votes timer = isJust $ assess $ getVoteStats votes timer
    (vs, _)<- shortcut2b voteEvents timerEvent isFinished
@@ -101,8 +101,9 @@ displayVotes = do
 
 -- trigger the display of a radio button choice on the player screen, yelding either True or False.
 -- after the time limit, the value sent back is Nothing.
-singleVote :: String -> PlayerNumber -> Event Bool
-singleVote title pn = inputRadio pn title [(True, "For"), (False, "Against")]
+singleVote ::  String -> RuleNumber -> PlayerNumber -> Event Bool
+singleVote name rn pn = inputRadio pn title [(True, "For"), (False, "Against")] where
+   title = "Vote for rule: \"" ++ name ++ "\" (#" ++ (show rn) ++ "):"
 
 -- | assess the vote results according to a unanimity
 unanimity :: AssessFunction
@@ -158,25 +159,12 @@ voted       vs = M.findWithDefault 0 True (voteCounts vs) + M.findWithDefault 0 
 
 -- | display an on going vote
 displayOnGoingVote :: VoteBegin -> Nomex ()
-displayOnGoingVote (VoteBegin ri endTime en) = void $ outputAll $ do
-   mds <- getIntermediateResults en
-   let mbs = map getBooleanResult <$> mds
-   pns <- getAllPlayerNumbers
-   case mbs of
-      Just bs -> showOnGoingVote (getVotes pns bs) (_rNumber ri) endTime
-      Nothing -> return ""
-
-getVotes :: [PlayerNumber] -> [(PlayerNumber, Bool)] -> [(PlayerNumber, Maybe Bool)]
-getVotes pns rs = map (findVote rs) pns where
-   findVote :: [(PlayerNumber, Bool)] -> PlayerNumber -> (PlayerNumber, Maybe Bool)
-   findVote rs' pn = case (find (\(pn1, _) -> pn == pn1) rs') of
-      Just (pn', b) -> (pn', Just b)
-      Nothing -> (pn, Nothing)
-
-getBooleanResult :: (PlayerNumber, SomeData) -> (PlayerNumber, Bool)
-getBooleanResult (pn, SomeData sd) = case (cast sd) of
-   Just a  -> (pn, a)
-   Nothing -> error "incorrect vote field"
+displayOnGoingVote (VoteBegin (RuleInfo rn _ _ _ _ _ (RuleTemplate name _ _ _ _ _ _)) endTime en pns) = void $ outputAll $ do
+   let voteEvents = map (singleVote name rn) pns
+   ers <- getEventResults en voteEvents
+   if (null ers)
+     then return ""
+     else showOnGoingVote (zip pns ers) rn endTime
 
 showOnGoingVote :: [(PlayerNumber, Maybe Bool)] -> RuleNumber -> UTCTime -> Nomex String
 showOnGoingVote [] rn _ = return $ "Nobody voted yet for rule #" ++ (show rn) ++ "."
