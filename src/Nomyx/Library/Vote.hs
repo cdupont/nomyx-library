@@ -160,11 +160,12 @@ voted       vs = M.findWithDefault 0 True (voteCounts vs) + M.findWithDefault 0 
 -- | display an on going vote
 displayOnGoingVote :: VoteBegin -> Nomex ()
 displayOnGoingVote (VoteBegin (RuleInfo rn _ _ _ _ _ (RuleTemplate name _ _ _ _ _ _)) endTime en pns) = void $ outputAll $ do
-   let voteEvents = map (singleVote name rn) pns
-   ers <- mapM (\pn -> getEventResult en (singleVote name rn pn)) pns
-   if (null ers)
-     then return ""
-     else showOnGoingVote (zip pns ers) rn endTime
+   isa <- isEventActive en
+   if isa
+     then do
+        ers <- mapM (\pn -> getEventResult en (singleVote name rn pn)) pns
+        showOnGoingVote (zip pns ers) rn endTime
+     else return ""
 
 showOnGoingVote :: [(PlayerNumber, Maybe Bool)] -> RuleNumber -> UTCTime -> Nomex String
 showOnGoingVote [] rn _ = return $ "Nobody voted yet for rule #" ++ (show rn) ++ "."
