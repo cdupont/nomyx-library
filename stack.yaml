@@ -1,6 +1,12 @@
 flags: {}
 packages:
 - '.'
+- location: ../nomyx-language
+  extra-dep: true
+- location: ../imprevu
+  extra-dep: true
+- location: ../shortcut
+  extra-dep: true
 extra-deps:
 - nomyx-language-1.0.0
 - imprevu-0.1.0
