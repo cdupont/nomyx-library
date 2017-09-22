@@ -146,6 +146,14 @@
   decls:    [Nomyx/Library/Bank.hs]
   picture:  null
 
+- name:     Daily taxes
+  author:   jship
+  desc:     "a player collects taxes from all other players (change the 1 to the player number that becomes tax collector, change the 10 to the new taxation amount)"
+  rule:     collectTaxesPerDay 1 10
+  category: [Bank]
+  decls:    [Nomyx/Library/Bank.hs]
+  picture:  null
+
 # Players
 
 - name:     Ban player

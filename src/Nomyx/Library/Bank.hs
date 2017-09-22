@@ -102,3 +102,16 @@ transfer src (dst, amount) = do
         void $ newOutput_ (Just src) ("Transaction failed")
     else do
       void $ newOutput_ (Just src) ("Insufficient balance or wrong amount")
+
+-- | Variable holding the player number of the Tax Collector
+taxCollector :: V PlayerNumber
+taxCollector = V "TaxCollector"
+
+-- | players pay the tax collector every day
+-- you can also try with "minutely" or "monthly" instead of "daily" and everything in the "time-recurrence" package
+collectTaxesPerDay :: PlayerNumber -> Int -> Rule
+collectTaxesPerDay taxMan taxAmount = do
+   newVar_ "TaxCollector" taxMan
+   void $ modifyPlayerName taxMan ("Tax Collector " ++)
+   schedule_ (recur daily) (void $ forEachPlayer_ $ \pn ->
+       when (pn /= taxMan) (transfer pn (taxMan, taxAmount)))
